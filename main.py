@@ -52,14 +52,15 @@ def get_best_answer(message):
 
     best_question_index = np.argmax(similarities)
 
+    print(similarities)
+
     if similarities[best_question_index] < 0.4:
         return [0,
-                "Explique ao cliente que você não sabe como ajudá-lo com essa questão. Pergunte se pode ajudar em "
-                "algo mais."]
+                "Fale que não sabe sobre a questão. Pergunte se pode ajudar em "
+                "algo mais?"]
 
     best_response = csv_questions.iloc[best_question_index]['Answer']
 
-    print(best_response)
     return [1, best_response]
 
 
@@ -77,8 +78,8 @@ def handle_start(message):
 def handle_chat(message):
     question = message.text[3:]
     response = openai.Completion.create(model="text-davinci-003",
-                                        prompt=create_prompt(question), temperature=0.5,
-                                        max_tokens=1024,
+                                        prompt=create_prompt(question), temperature=0.3,
+                                        max_tokens=250,
                                         top_p=1)
     answer = response['choices'][0]['text']
     bot.send_message(message.chat.id, answer)
