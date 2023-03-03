@@ -32,12 +32,9 @@ question_embeddings = model.encode(csv_questions['Question'].tolist())
 answer_embeddings = model.encode(csv_questions['Answer'].tolist())
 
 data = {}
-for i in range(len(csv_questions)):
-    question = csv_questions.iloc[i]['Question']
-    answer = csv_questions.iloc[i]['Answer']
-    question_emb = question_embeddings[i]
-    answer_emb = answer_embeddings[i]
-    data[question] = {'question_emb': question_emb, 'answer_emb': answer_emb}
+for i, row in csv_questions.iterrows():
+        question = row['Question']
+        data[question] = {'question_emb': question_embeddings[i], 'answer_emb': answer_embeddings[i]}
 
 save_to_pkl(data)
 
@@ -55,18 +52,19 @@ def get_best_answer(message):
 
     best_question_index = np.argmax(similarities)
 
-    if similarities[best_question_index] < 0.6:
+    if similarities[best_question_index] < 0.4:
         return [0,
                 "Explique ao cliente que você não sabe como ajudá-lo com essa questão. Pergunte se pode ajudar em "
                 "algo mais."]
 
     best_response = csv_questions.iloc[best_question_index]['Answer']
 
+    print(best_response)
     return [1, best_response]
 
 
 def create_prompt(message):
-    return f"esta é uma conversa acolhedora com o cliente\n\n{get_best_answer(message)}\n\nQ:{message}\n\n:"
+    return f"Você é um atendente que está ajudando um cliente do Rei dos Salgadinhos\n\nResponda conforme:{get_best_answer(message)}\n\nQ:{message}\n\nA:"
 
 
 # Telegram bot
@@ -79,8 +77,8 @@ def handle_start(message):
 def handle_chat(message):
     question = message.text[3:]
     response = openai.Completion.create(model="text-davinci-003",
-                                        prompt=create_prompt(question), temperature=0.4,
-                                        max_tokens=256,
+                                        prompt=create_prompt(question), temperature=0.5,
+                                        max_tokens=1024,
                                         top_p=1)
     answer = response['choices'][0]['text']
     bot.send_message(message.chat.id, answer)
